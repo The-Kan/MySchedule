@@ -51,7 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.my.schedule.R
-import com.my.schedule.ui.log.getTAG
+import com.my.schedule.ui.log.LogManager
 import com.my.schedule.ui.preference.MainActivityRatio.Companion.BOTTOM_SHEET_HEIGHT
 import com.my.schedule.ui.preference.MainActivityRatio.Companion.BOTTOM_WEIGHT
 import com.my.schedule.ui.preference.MainActivityRatio.Companion.HEADER_WEIGHT
@@ -59,8 +59,10 @@ import com.my.schedule.ui.preference.MainActivityRatio.Companion.LIST_WEIGHT
 import com.my.schedule.ui.theme.MyScheduleTheme
 
 
+private val tag = LogManager.getPrefix("MainActivity")
+
 class MainActivity : ComponentActivity() {
-    private val TAG = getTAG("MainActivity")
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,7 +132,7 @@ class MainActivity : ComponentActivity() {
         }
 
         LaunchedEffect(sheetState.targetValue) {
-            Log.i(TAG, sheetState.targetValue.toString())
+            Log.i(tag, sheetState.targetValue.toString())
             if (sheetState.targetValue == ModalBottomSheetValue.Hidden) {
                 onButtonClick()
             }

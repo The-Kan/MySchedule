@@ -2,7 +2,10 @@ package com.my.schedule.ui.log
 
 var PROJECT_NAME = "My Schedule"
 
-fun getTAG(className : String) : String {
-    PROJECT_NAME
-    return "[$PROJECT_NAME]$className"
+class LogManager {
+    companion object{
+        fun getPrefix(className : String) : String {
+            return "[$PROJECT_NAME]$className"
+        }
+    }
 }
