@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
@@ -46,11 +47,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.my.schedule.R
+import com.my.schedule.ui.data.Todo
 import com.my.schedule.ui.log.LogManager
 import com.my.schedule.ui.preference.MainActivityRatio.Companion.BOTTOM_SHEET_HEIGHT
 import com.my.schedule.ui.preference.MainActivityRatio.Companion.BOTTOM_WEIGHT
@@ -114,7 +118,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
     private fun BottomSheet(showModalBottomSheet: Boolean, onButtonClick: () -> Unit) {
@@ -145,14 +148,62 @@ class MainActivity : ComponentActivity() {
                         .padding(16.dp)
                         .fillMaxHeight(BOTTOM_SHEET_HEIGHT)
                 ) {
-                    Text(
-                        stringResource(id = R.string.add_todo),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+
+                    var inputText by remember { mutableStateOf(TextFieldValue("")) }
+                    val context = LocalContext.current
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Button(
+                                onClick = { onButtonClick() },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(stringResource(id = R.string.close), color = Color.Blue,
+                                    fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            }
+                            Text(
+                                stringResource(id = R.string.add_todo),
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Button(
+                                onClick = { Toast.makeText(context, "Entered text: ${inputText.text}", Toast.LENGTH_SHORT).show()
+                                            Todo(todo = inputText.text)
+
+                                          },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text(stringResource(id = R.string.add), color = Color.Blue,
+                                    fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            }
+                        }
+                    }
                     Spacer(modifier = Modifier.height(20.dp))
-                    Button(onClick = { onButtonClick() }) {
-                        Text(stringResource(id = R.string.close))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(8f)
+                            .padding(10.dp)
+                    ) {
+                        TextField(
+                            value = inputText,
+                            onValueChange = { inputText = it },
+                            label = { Text("Enter text") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
                 }
             },
@@ -162,6 +213,11 @@ class MainActivity : ComponentActivity() {
 
         }
 
+
+    }
+
+    @Composable
+    fun UserInputView() {
 
     }
 

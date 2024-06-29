@@ -3,4 +3,5 @@
     <string name="add_todo">새로운 할 일 추가</string>
     <string name="settings">환경 설정</string>
     <string name="close">닫기</string>
+    <string name="add">추가</string>
 </resources>
