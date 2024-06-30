@@ -131,10 +131,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
-        todoViewModel.updateAll()
-
-
     }
 
     private fun initRoom() {
@@ -298,7 +294,6 @@ class MainActivity : ComponentActivity() {
                     DropdownMenuItem(
                         text = { Text("Update Test") },
                         onClick = {
-                            todoViewModel.updateAll()
                             expanded = false
                         }
                     )
@@ -308,7 +303,6 @@ class MainActivity : ComponentActivity() {
                             GlobalScope.launch {
                                 todoViewModel.deleteAll()
                                 delay(500)
-                                todoViewModel.updateAll()
                             }
 
                             expanded = false
