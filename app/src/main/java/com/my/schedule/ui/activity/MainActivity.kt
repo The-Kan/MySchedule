@@ -41,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -53,23 +54,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import com.my.schedule.R
 import com.my.schedule.ui.data.Todo
+import com.my.schedule.ui.data.TodoRepository
 import com.my.schedule.ui.log.LogManager
 import com.my.schedule.ui.preference.MainActivityRatio.Companion.BOTTOM_SHEET_HEIGHT
 import com.my.schedule.ui.preference.MainActivityRatio.Companion.BOTTOM_WEIGHT
 import com.my.schedule.ui.preference.MainActivityRatio.Companion.HEADER_WEIGHT
 import com.my.schedule.ui.preference.MainActivityRatio.Companion.LIST_WEIGHT
+import com.my.schedule.ui.data.TodoDatabase
 import com.my.schedule.ui.theme.MyScheduleTheme
+import com.my.schedule.ui.viewmodel.TodoViewModel
+import com.my.schedule.ui.viewmodel.TodoViewModelFactory
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 private val tag = LogManager.getPrefix("MainActivity")
 
 class MainActivity : ComponentActivity() {
-
+    private lateinit var todoViewModel: TodoViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        initRoom()
+
         setContent {
             MyScheduleTheme {
                 // A surface container using the 'background' color from the theme
@@ -116,6 +128,20 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        todoViewModel.updateAll()
+
+
+
+    }
+
+    fun initRoom() {
+        // Room 데이터 베이스 초기화
+        val database = TodoDatabase.getDatabase(this)
+        val repository = TodoRepository(database.todoDao())
+        val viewModelFactory = TodoViewModelFactory(repository)
+        todoViewModel = ViewModelProvider(this, viewModelFactory).get(TodoViewModel::class.java)
+
     }
 
     @OptIn(ExperimentalMaterialApi::class)
@@ -179,8 +205,16 @@ class MainActivity : ComponentActivity() {
                             )
                             Button(
                                 onClick = { Toast.makeText(context, "Entered text: ${inputText.text}", Toast.LENGTH_SHORT).show()
-                                            Todo(todo = inputText.text)
-
+                                             GlobalScope.launch {
+                                                 val job = launch {
+                                                     todoViewModel.insert(Todo(todo = inputText.text))
+                                                     Log.i(tag, "Deok insert")
+                                                 }
+                                                 job.join()
+                                                 delay(500)
+                                                 Log.i(tag, "Deok updateAll")
+                                                 todoViewModel.updateAll()
+                                             }
                                           },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                                 contentPadding = PaddingValues(0.dp)
@@ -216,10 +250,6 @@ class MainActivity : ComponentActivity() {
 
     }
 
-    @Composable
-    fun UserInputView() {
-
-    }
 
     @Composable
     fun HeaderWithButton() {
@@ -243,6 +273,8 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.wrapContentSize(),
                 contentAlignment = Alignment.TopEnd
             ) {
+
+                val context = LocalContext.current
                 IconButton(
                     onClick = {
                         expanded = true
@@ -260,8 +292,21 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.background(Color.White)
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Temp") },
+                        text = { Text("Update Test") },
                         onClick = {
+                            todoViewModel.updateAll()
+                            expanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("delete Test")},
+                        onClick = {
+                            GlobalScope.launch {
+                                todoViewModel.deleteAll()
+                                delay(500)
+                                todoViewModel.updateAll()
+                            }
+
                             expanded = false
                         }
                     )
@@ -312,12 +357,13 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun NumberedList() {
-        val numbers = (1..20).toList() // 숫자 리스트 생성
+    fun NumberedList(viewModel: TodoViewModel = todoViewModel) {
+        val todos by viewModel.items.observeAsState(emptyList())
+
         LazyColumn(modifier = Modifier.wrapContentSize())
         {
 
-            items(numbers) { number ->
+            items(todos) { todo ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -325,7 +371,7 @@ class MainActivity : ComponentActivity() {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = number.toString(),
+                        text = todo.todo,
                         fontSize = 24.sp,
                         modifier = Modifier.weight(1f)
                     )
@@ -333,7 +379,7 @@ class MainActivity : ComponentActivity() {
                         onClick = { /* 버튼 클릭 시 동작 */
                             Toast.makeText(
                                 baseContext,
-                                "${number.toString()} button Click",
+                                "${todo.todo} button Click",
                                 Toast.LENGTH_SHORT
                             ).show()
                         },
