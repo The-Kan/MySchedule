@@ -57,13 +57,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import com.my.schedule.R
 import com.my.schedule.ui.data.Todo
+import com.my.schedule.ui.data.TodoDatabase
 import com.my.schedule.ui.data.TodoRepository
 import com.my.schedule.ui.log.LogManager
-import com.my.schedule.ui.preference.MainActivityRatio.Companion.BOTTOM_SHEET_HEIGHT
-import com.my.schedule.ui.preference.MainActivityRatio.Companion.BOTTOM_WEIGHT
-import com.my.schedule.ui.preference.MainActivityRatio.Companion.HEADER_WEIGHT
-import com.my.schedule.ui.preference.MainActivityRatio.Companion.LIST_WEIGHT
-import com.my.schedule.ui.data.TodoDatabase
+import com.my.schedule.ui.preference.MainActivityPrefer.Companion.BOTTOM_PADDING
+import com.my.schedule.ui.preference.MainActivityPrefer.Companion.BOTTOM_SHEET_HEIGHT
+import com.my.schedule.ui.preference.MainActivityPrefer.Companion.BOTTOM_WEIGHT
+import com.my.schedule.ui.preference.MainActivityPrefer.Companion.HEADER_PADDING
+import com.my.schedule.ui.preference.MainActivityPrefer.Companion.HEADER_WEIGHT
+import com.my.schedule.ui.preference.MainActivityPrefer.Companion.LIST_PADDING
+import com.my.schedule.ui.preference.MainActivityPrefer.Companion.LIST_WEIGHT
 import com.my.schedule.ui.theme.MyScheduleTheme
 import com.my.schedule.ui.viewmodel.TodoViewModel
 import com.my.schedule.ui.viewmodel.TodoViewModelFactory
@@ -100,7 +103,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(HEADER_WEIGHT)
-                                    .padding(10.dp)
+                                    .padding(HEADER_PADDING.dp)
                             ) {
                                 HeaderWithButton()
                             }
@@ -109,7 +112,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(LIST_WEIGHT)
-                                    .padding(10.dp)
+                                    .padding(LIST_PADDING.dp)
                             ) {
                                 NumberedList()
                             }
@@ -118,7 +121,7 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(BOTTOM_WEIGHT)
-                                    .padding(10.dp)
+                                    .padding(BOTTOM_PADDING.dp)
                             ) {
                                 BottomWithButton(onButtonClick = { showModalBottomSheet = true })
                             }
@@ -132,10 +135,9 @@ class MainActivity : ComponentActivity() {
         todoViewModel.updateAll()
 
 
-
     }
 
-    fun initRoom() {
+    private fun initRoom() {
         // Room 데이터 베이스 초기화
         val database = TodoDatabase.getDatabase(this)
         val repository = TodoRepository(database.todoDao())
@@ -195,8 +197,10 @@ class MainActivity : ComponentActivity() {
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                                 contentPadding = PaddingValues(0.dp)
                             ) {
-                                Text(stringResource(id = R.string.close), color = Color.Blue,
-                                    fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                Text(
+                                    stringResource(id = R.string.close), color = Color.Blue,
+                                    fontWeight = FontWeight.Bold, fontSize = 15.sp
+                                )
                             }
                             Text(
                                 stringResource(id = R.string.add_todo),
@@ -204,23 +208,24 @@ class MainActivity : ComponentActivity() {
                                 fontWeight = FontWeight.Bold
                             )
                             Button(
-                                onClick = { Toast.makeText(context, "Entered text: ${inputText.text}", Toast.LENGTH_SHORT).show()
-                                             GlobalScope.launch {
-                                                 val job = launch {
-                                                     todoViewModel.insert(Todo(todo = inputText.text))
-                                                     Log.i(tag, "Deok insert")
-                                                 }
-                                                 job.join()
-                                                 delay(500)
-                                                 Log.i(tag, "Deok updateAll")
-                                                 todoViewModel.updateAll()
-                                             }
-                                          },
+                                onClick = {
+                                    Toast.makeText(
+                                        context,
+                                        "Entered text: ${inputText.text}",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    GlobalScope.launch {
+                                        todoViewModel.insert(Todo(todo = inputText.text))
+                                    }
+                                    onButtonClick()
+                                },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                                 contentPadding = PaddingValues(0.dp)
                             ) {
-                                Text(stringResource(id = R.string.add), color = Color.Blue,
-                                    fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                                Text(
+                                    stringResource(id = R.string.add), color = Color.Blue,
+                                    fontWeight = FontWeight.Bold, fontSize = 15.sp
+                                )
                             }
                         }
                     }
@@ -274,7 +279,6 @@ class MainActivity : ComponentActivity() {
                 contentAlignment = Alignment.TopEnd
             ) {
 
-                val context = LocalContext.current
                 IconButton(
                     onClick = {
                         expanded = true
@@ -299,7 +303,7 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("delete Test")},
+                        text = { Text("delete Test") },
                         onClick = {
                             GlobalScope.launch {
                                 todoViewModel.deleteAll()
@@ -357,8 +361,8 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun NumberedList(viewModel: TodoViewModel = todoViewModel) {
-        val todos by viewModel.items.observeAsState(emptyList())
+    fun NumberedList() {
+        val todos by todoViewModel.items.observeAsState(emptyList())
 
         LazyColumn(modifier = Modifier.wrapContentSize())
         {
@@ -377,11 +381,7 @@ class MainActivity : ComponentActivity() {
                     )
                     Button(
                         onClick = { /* 버튼 클릭 시 동작 */
-                            Toast.makeText(
-                                baseContext,
-                                "${todo.todo} button Click",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                            todoViewModel.delete(todo)
                         },
                         modifier = Modifier.padding(start = 16.dp)
                     ) {
