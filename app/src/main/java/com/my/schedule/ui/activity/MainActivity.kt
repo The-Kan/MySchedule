@@ -68,8 +68,10 @@ import com.my.schedule.ui.preference.MainActivityPrefer.Companion.HEADER_WEIGHT
 import com.my.schedule.ui.preference.MainActivityPrefer.Companion.LIST_PADDING
 import com.my.schedule.ui.preference.MainActivityPrefer.Companion.LIST_WEIGHT
 import com.my.schedule.ui.theme.MyScheduleTheme
+import com.my.schedule.ui.viewmodel.CounterViewModel
 import com.my.schedule.ui.viewmodel.TodoViewModel
 import com.my.schedule.ui.viewmodel.TodoViewModelFactory
+import io.reactivex.rxjava3.disposables.Disposable
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -79,11 +81,13 @@ private val tag = LogManager.getPrefix("MainActivity")
 
 class MainActivity : ComponentActivity() {
     private lateinit var todoViewModel: TodoViewModel
+    private lateinit var counterViewModel: CounterViewModel
+    private var disposable: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        initRoom()
+        init()
 
         setContent {
             MyScheduleTheme {
@@ -131,6 +135,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun init() {
+        initRoom()
+        counterViewModel = CounterViewModel()
     }
 
     private fun initRoom() {
@@ -274,7 +283,6 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.wrapContentSize(),
                 contentAlignment = Alignment.TopEnd
             ) {
-
                 IconButton(
                     onClick = {
                         expanded = true
@@ -323,7 +331,7 @@ class MainActivity : ComponentActivity() {
         Row(
             modifier = Modifier
                 .fillMaxSize(),
-            horizontalArrangement = Arrangement.Start,
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -351,7 +359,34 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+
+                Button(modifier = Modifier
+                    .wrapContentSize()
+                    .padding(0.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    contentPadding = PaddingValues(0.dp),
+                    onClick = { disposable = counterViewModel.incrementCount() }) {
+                    Text(
+                        fontSize = 14.sp,
+                        color = Color.Black,
+                        text = "Timer Start"
+                    )
+                }
+                Text(
+                    modifier = Modifier.padding(start = 8.dp),
+                    fontSize = 14.sp,
+                    color = Color.Black,
+                    text = "${counterViewModel.count}"
+                )
+            }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        disposable?.dispose()
     }
 
     @Composable
