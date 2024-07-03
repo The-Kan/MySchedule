@@ -1,7 +1,7 @@
 package com.my.schedule.ui.viewmodel
 
 import androidx.lifecycle.*
-import com.my.schedule.ui.data.TodoRepository
+import com.my.schedule.ui.data.todo.TodoRepository
 
 class TodoViewModelFactory(private val repository: TodoRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

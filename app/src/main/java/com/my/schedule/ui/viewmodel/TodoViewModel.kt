@@ -3,8 +3,8 @@ package com.my.schedule.ui.viewmodel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.my.schedule.ui.data.Todo
-import com.my.schedule.ui.data.TodoRepository
+import com.my.schedule.ui.data.todo.Todo
+import com.my.schedule.ui.data.todo.TodoRepository
 import kotlinx.coroutines.launch
 
 class TodoViewModel(private val repository: TodoRepository) : ViewModel() {

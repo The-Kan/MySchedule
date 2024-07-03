@@ -1,4 +1,4 @@
-package com.my.schedule.ui.data
+package com.my.schedule.ui.data.todo
 
 import android.content.Context
 import androidx.room.Database

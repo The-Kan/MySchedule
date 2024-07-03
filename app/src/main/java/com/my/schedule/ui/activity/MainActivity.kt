@@ -56,9 +56,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import com.my.schedule.R
-import com.my.schedule.ui.data.Todo
-import com.my.schedule.ui.data.TodoDatabase
-import com.my.schedule.ui.data.TodoRepository
+import com.my.schedule.ui.data.todo.Todo
+import com.my.schedule.ui.data.todo.TodoDatabase
+import com.my.schedule.ui.data.todo.TodoRepository
+import com.my.schedule.ui.http.retrofit.RetrofitClient
 import com.my.schedule.ui.log.LogManager
 import com.my.schedule.ui.preference.MainActivityPrefer.Companion.BOTTOM_PADDING
 import com.my.schedule.ui.preference.MainActivityPrefer.Companion.BOTTOM_SHEET_HEIGHT
@@ -71,7 +72,9 @@ import com.my.schedule.ui.theme.MyScheduleTheme
 import com.my.schedule.ui.viewmodel.CounterViewModel
 import com.my.schedule.ui.viewmodel.TodoViewModel
 import com.my.schedule.ui.viewmodel.TodoViewModelFactory
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
+import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -82,7 +85,8 @@ private val tag = LogManager.getPrefix("MainActivity")
 class MainActivity : ComponentActivity() {
     private lateinit var todoViewModel: TodoViewModel
     private lateinit var counterViewModel: CounterViewModel
-    private var disposable: Disposable? = null
+    private var disposableIncrement: Disposable? = null
+    private var disposableRetrofit: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -300,8 +304,9 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.background(Color.White)
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Update Test") },
+                        text = { Text("Retrofit Test") },
                         onClick = {
+                            fetchPosts()
                             expanded = false
                         }
                     )
@@ -367,7 +372,7 @@ class MainActivity : ComponentActivity() {
                     .padding(0.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     contentPadding = PaddingValues(0.dp),
-                    onClick = { disposable = counterViewModel.incrementCount() }) {
+                    onClick = { disposableIncrement = counterViewModel.incrementCount() }) {
                     Text(
                         fontSize = 14.sp,
                         color = Color.Black,
@@ -384,9 +389,28 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    fun fetchPosts() {
+        val apiService = RetrofitClient.instance
+
+        disposableRetrofit = apiService.getPosts()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                posts ->
+                for(post in posts){
+                    Log.i(tag, "Ttile : ${post.title}")
+                }
+            }, {
+                error ->
+                    Log.i(tag, "${error.message}")
+            })
+
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-        disposable?.dispose()
+        disposableIncrement?.dispose()
+        disposableRetrofit?.dispose()
     }
 
     @Composable

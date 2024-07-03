@@ -1,4 +1,4 @@
-package com.my.schedule.ui.data
+package com.my.schedule.ui.data.todo
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
