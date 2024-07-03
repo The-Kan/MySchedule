@@ -398,7 +398,7 @@ class MainActivity : ComponentActivity() {
             .subscribe({
                 posts ->
                 for(post in posts){
-                    Log.i(tag, "Ttile : ${post.title}")
+                    Log.i(tag, "Title : ${post.title}")
                 }
             }, {
                 error ->
