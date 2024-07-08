@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.my.schedule"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"

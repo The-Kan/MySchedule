@@ -1,5 +1,7 @@
 package com.my.schedule.ui.activity
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -78,6 +81,10 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
 
 
 private val tag = LogManager.getPrefix("MainActivity")
@@ -90,7 +97,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // PR 테스트
+
         init()
 
         setContent {
@@ -189,6 +196,8 @@ class MainActivity : ComponentActivity() {
                     var inputText by remember { mutableStateOf(TextFieldValue("")) }
                     val context = LocalContext.current
 
+                    var todo = Todo()
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -224,7 +233,8 @@ class MainActivity : ComponentActivity() {
                                         Toast.LENGTH_SHORT
                                     ).show()
                                     GlobalScope.launch {
-                                        todoViewModel.insert(Todo(todo = inputText.text))
+                                        todo.todo = inputText.text
+                                        todoViewModel.insert(todo)
                                     }
                                     onButtonClick()
                                 },
@@ -243,16 +253,26 @@ class MainActivity : ComponentActivity() {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(8f)
+                            .weight(1f)
                             .padding(10.dp)
                     ) {
                         TextField(
                             value = inputText,
                             onValueChange = { inputText = it },
-                            label = { Text("Enter text") },
+                            label = { Text(stringResource(R.string.todo)) },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(6f)
+                            .padding(10.dp)
+                    ) {
+                        DateTimePickerScreen(todo)
+                    }
+
                 }
             },
             sheetState = sheetState,
@@ -262,6 +282,91 @@ class MainActivity : ComponentActivity() {
         }
 
 
+    }
+
+    @Composable
+    fun DateTimePickerScreen(todo: Todo) {
+        var selectedDate by remember { mutableStateOf(LocalDate.now().plusDays(1)) }
+        var selectedTime by remember { mutableStateOf(LocalTime.now()) }
+        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
+        val calendar = Calendar.getInstance()
+        val context = LocalContext.current
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "${stringResource(id = R.string.date)} : ${
+                        selectedDate.format(
+                            dateFormatter
+                        )
+                    }"
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = {
+                    DatePickerDialog(
+                        context,
+                        { _, year, month, dayOfMonth ->
+                            selectedDate = LocalDate.of(year, month + 1, dayOfMonth)
+                            todo.date = selectedDate.format(dateFormatter)
+                        },
+                        calendar.get(Calendar.YEAR),
+                        calendar.get(Calendar.MONTH),
+                        calendar.get(Calendar.DAY_OF_MONTH)
+                    ).show()
+                }) {
+                    Text(text = stringResource(id = R.string.date_setting))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                Text(
+                    text = "${stringResource(id = R.string.time)} : ${
+                        selectedTime.format(
+                            timeFormatter
+                        )
+                    }"
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = {
+                    TimePickerDialog(
+                        context,
+                        { _, hourOfDay, minute ->
+                            selectedTime = LocalTime.of(hourOfDay, minute)
+                            todo.date = selectedTime.format(timeFormatter)
+                        },
+                        calendar.get(Calendar.HOUR_OF_DAY),
+                        calendar.get(Calendar.MINUTE),
+                        false
+                    ).show()
+                }) {
+                    Text(text = stringResource(id = R.string.time_setting))
+                }
+            }
+
+
+        }
     }
 
 
@@ -395,14 +500,12 @@ class MainActivity : ComponentActivity() {
         disposableRetrofit = apiService.getPosts()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                posts ->
-                for(post in posts){
+            .subscribe({ posts ->
+                for (post in posts) {
                     Log.i(tag, "Title : ${post.title}")
                 }
-            }, {
-                error ->
-                    Log.i(tag, "${error.message}")
+            }, { error ->
+                Log.i(tag, "${error.message}")
             })
 
     }
@@ -438,7 +541,7 @@ class MainActivity : ComponentActivity() {
                         },
                         modifier = Modifier.padding(start = 16.dp)
                     ) {
-                        Text(text = "Button")
+                        Text(text = stringResource(id = R.string.completed))
                     }
                 }
             }
