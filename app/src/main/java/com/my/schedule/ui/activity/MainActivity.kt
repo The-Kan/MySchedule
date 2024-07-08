@@ -90,7 +90,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // PR 테스트
+        // PR 테스트 2
         init()
 
         setContent {
