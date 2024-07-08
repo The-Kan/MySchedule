@@ -2,11 +2,13 @@ package com.my.schedule.ui.activity
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -57,13 +59,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModelProvider
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.my.schedule.R
 import com.my.schedule.ui.data.todo.Todo
 import com.my.schedule.ui.data.todo.TodoDatabase
 import com.my.schedule.ui.data.todo.TodoRepository
+import com.my.schedule.ui.datetime.DateTime.Companion.DATE_FORMATTER
+import com.my.schedule.ui.datetime.DateTime.Companion.TIME_FORMATTER
 import com.my.schedule.ui.http.retrofit.RetrofitClient
 import com.my.schedule.ui.log.LogManager
+import com.my.schedule.ui.notification.TodoNotificationWorker
 import com.my.schedule.ui.preference.MainActivityPrefer.Companion.BOTTOM_PADDING
 import com.my.schedule.ui.preference.MainActivityPrefer.Companion.BOTTOM_SHEET_HEIGHT
 import com.my.schedule.ui.preference.MainActivityPrefer.Companion.BOTTOM_WEIGHT
@@ -78,13 +88,17 @@ import com.my.schedule.ui.viewmodel.TodoViewModelFactory
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import java.time.ZoneId
 import java.util.Calendar
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 
 private val tag = LogManager.getPrefix("MainActivity")
@@ -151,6 +165,9 @@ class MainActivity : ComponentActivity() {
     private fun init() {
         initRoom()
         counterViewModel = CounterViewModel()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            checkNotificationPermission()
+        }
     }
 
     private fun initRoom() {
@@ -162,7 +179,7 @@ class MainActivity : ComponentActivity() {
 
     }
 
-    @OptIn(ExperimentalMaterialApi::class)
+    @OptIn(ExperimentalMaterialApi::class, DelicateCoroutinesApi::class)
     @Composable
     private fun BottomSheet(showModalBottomSheet: Boolean, onButtonClick: () -> Unit) {
         val sheetState = rememberModalBottomSheetState(
@@ -234,6 +251,11 @@ class MainActivity : ComponentActivity() {
                                     ).show()
                                     GlobalScope.launch {
                                         todo.todo = inputText.text
+                                        todo.notificationWorkId = reserveNotification(
+                                            todo = todo.todo,
+                                            date = todo.date,
+                                            time = todo.time
+                                        )
                                         todoViewModel.insert(todo)
                                     }
                                     onButtonClick()
@@ -284,12 +306,44 @@ class MainActivity : ComponentActivity() {
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun checkNotificationPermission() {
+        if (!NotificationManagerCompat.from(this).areNotificationsEnabled()) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                1
+            )
+        }
+    }
+
+    private fun reserveNotification(todo: String, date: String, time: String): String {
+        val localDate = LocalDate.parse(date, DATE_FORMATTER)
+        val localTime = LocalTime.parse(time, TIME_FORMATTER)
+        val notificationTime = LocalDateTime.of(localDate, localTime)
+        val delay = notificationTime.atZone(ZoneId.systemDefault())
+            .toEpochSecond() - System.currentTimeMillis() / 1000
+        val workRequest = OneTimeWorkRequestBuilder<TodoNotificationWorker>()
+            .setInputData(Data.Builder().putString("todo", todo).build())
+            .setInitialDelay(delay, TimeUnit.SECONDS)
+            .build()
+
+        WorkManager.getInstance(applicationContext).enqueue(workRequest)
+        return workRequest.id.toString()
+    }
+
+    private fun cancelNotification(workRequestIdString: String) {
+        val uuid = UUID.fromString(workRequestIdString)
+        WorkManager.getInstance(applicationContext).cancelWorkById(uuid)
+    }
+
     @Composable
     fun DateTimePickerScreen(todo: Todo) {
         var selectedDate by remember { mutableStateOf(LocalDate.now().plusDays(1)) }
         var selectedTime by remember { mutableStateOf(LocalTime.now()) }
-        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-        val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
+        todo.date = selectedDate.format(DATE_FORMATTER)
+        todo.time = selectedTime.format(TIME_FORMATTER)
 
         val calendar = Calendar.getInstance()
         val context = LocalContext.current
@@ -311,7 +365,7 @@ class MainActivity : ComponentActivity() {
                 Text(
                     text = "${stringResource(id = R.string.date)} : ${
                         selectedDate.format(
-                            dateFormatter
+                            DATE_FORMATTER
                         )
                     }"
                 )
@@ -321,7 +375,7 @@ class MainActivity : ComponentActivity() {
                         context,
                         { _, year, month, dayOfMonth ->
                             selectedDate = LocalDate.of(year, month + 1, dayOfMonth)
-                            todo.date = selectedDate.format(dateFormatter)
+                            todo.date = selectedDate.format(DATE_FORMATTER)
                         },
                         calendar.get(Calendar.YEAR),
                         calendar.get(Calendar.MONTH),
@@ -344,7 +398,7 @@ class MainActivity : ComponentActivity() {
                 Text(
                     text = "${stringResource(id = R.string.time)} : ${
                         selectedTime.format(
-                            timeFormatter
+                            TIME_FORMATTER
                         )
                     }"
                 )
@@ -354,7 +408,7 @@ class MainActivity : ComponentActivity() {
                         context,
                         { _, hourOfDay, minute ->
                             selectedTime = LocalTime.of(hourOfDay, minute)
-                            todo.date = selectedTime.format(timeFormatter)
+                            todo.date = selectedTime.format(TIME_FORMATTER)
                         },
                         calendar.get(Calendar.HOUR_OF_DAY),
                         calendar.get(Calendar.MINUTE),
@@ -538,6 +592,7 @@ class MainActivity : ComponentActivity() {
                     Button(
                         onClick = { /* 버튼 클릭 시 동작 */
                             todoViewModel.delete(todo)
+                            cancelNotification(todo.notificationWorkId)
                         },
                         modifier = Modifier.padding(start = 16.dp)
                     ) {
