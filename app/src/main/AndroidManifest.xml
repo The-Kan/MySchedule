@@ -2,8 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Development Stage - temporary allowBackup false. because Room DB was saved automatically, it is not free to modify Room DB Table, Column
+         Released in market Stage - change to true -->
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -25,5 +27,11 @@
         </activity>
     </application>
 
+    <!-- permission -->
+
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- permission -->
+
 </manifest>

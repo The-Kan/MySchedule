@@ -4,4 +4,10 @@
     <string name="settings">환경 설정</string>
     <string name="close">닫기</string>
     <string name="add">추가</string>
+    <string name="todo">할 일</string>
+    <string name="date">날짜</string>
+    <string name="date_setting">날짜 설정</string>
+    <string name="time">시간</string>
+    <string name="time_setting">시간 설정</string>
+    <string name="completed">완료</string>
 </resources>
