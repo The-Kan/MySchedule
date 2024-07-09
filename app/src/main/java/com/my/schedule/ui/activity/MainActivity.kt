@@ -107,14 +107,8 @@ class MainActivity : ComponentActivity() {
     private val todoViewModel: TodoViewModel by viewModels()
     private val counterViewModel: CounterViewModel by viewModels()
     private var disposableIncrement: Disposable? = null
-        set(value) {
-            value?.let { compositeDisposable.add(value) }
-        }
     private var disposableRetrofit: Disposable? = null
-        set(value) {
-            value?.let { compositeDisposable.add(value) }
-        }
-    
+
     private val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -543,7 +537,10 @@ class MainActivity : ComponentActivity() {
                     .padding(0.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     contentPadding = PaddingValues(0.dp),
-                    onClick = { disposableIncrement = counterViewModel.incrementCount() }) {
+                    onClick = {
+                        disposableIncrement = counterViewModel.incrementCount()
+                        disposableIncrement?.let { compositeDisposable.add(it) }
+                    }) {
                     Text(
                         fontSize = 14.sp,
                         color = Color.Black,
@@ -573,7 +570,7 @@ class MainActivity : ComponentActivity() {
             }, { error ->
                 info(TAG, "${error.message}")
             })
-
+        disposableRetrofit?.let { compositeDisposable.add(it) }
     }
 
     override fun onDestroy() {
