@@ -1,4 +1,4 @@
-package com.my.schedule.ui.datetime
+package com.my.schedule.ui.utils
 
 import java.time.format.DateTimeFormatter
 
