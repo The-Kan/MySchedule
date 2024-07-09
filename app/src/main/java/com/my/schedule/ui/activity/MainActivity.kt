@@ -5,7 +5,6 @@ import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -50,6 +49,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,10 +70,9 @@ import com.my.schedule.R
 import com.my.schedule.ui.data.todo.Todo
 import com.my.schedule.ui.data.todo.TodoDatabase
 import com.my.schedule.ui.data.todo.TodoRepository
-import com.my.schedule.ui.datetime.DateTime.Companion.DATE_FORMATTER
-import com.my.schedule.ui.datetime.DateTime.Companion.TIME_FORMATTER
+import com.my.schedule.ui.utils.DateTime.Companion.DATE_FORMATTER
+import com.my.schedule.ui.utils.DateTime.Companion.TIME_FORMATTER
 import com.my.schedule.ui.http.retrofit.RetrofitClient
-import com.my.schedule.ui.log.LogManager
 import com.my.schedule.ui.notification.TodoNotificationWorker
 import com.my.schedule.ui.preference.MainActivityPrefer.Companion.BOTTOM_PADDING
 import com.my.schedule.ui.preference.MainActivityPrefer.Companion.BOTTOM_SHEET_HEIGHT
@@ -83,6 +82,9 @@ import com.my.schedule.ui.preference.MainActivityPrefer.Companion.HEADER_WEIGHT
 import com.my.schedule.ui.preference.MainActivityPrefer.Companion.LIST_PADDING
 import com.my.schedule.ui.preference.MainActivityPrefer.Companion.LIST_WEIGHT
 import com.my.schedule.ui.theme.MyScheduleTheme
+import com.my.schedule.ui.utils.TAG
+import com.my.schedule.ui.utils.debug
+import com.my.schedule.ui.utils.info
 import com.my.schedule.ui.viewmodel.CounterViewModel
 import com.my.schedule.ui.viewmodel.TodoViewModel
 import com.my.schedule.ui.viewmodel.TodoViewModelFactory
@@ -102,8 +104,6 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 
-private val tag = LogManager.getPrefix("MainActivity")
-
 class MainActivity : ComponentActivity() {
     private lateinit var todoViewModel: TodoViewModel
     private lateinit var counterViewModel: CounterViewModel
@@ -112,6 +112,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        debug(TAG, "On Create")
 
         init()
 
@@ -197,7 +198,7 @@ class MainActivity : ComponentActivity() {
         }
 
         LaunchedEffect(sheetState.targetValue) {
-            Log.i(tag, sheetState.targetValue.toString())
+            info(TAG, sheetState.targetValue.toString())
             if (sheetState.targetValue == ModalBottomSheetValue.Hidden) {
                 onButtonClick()
             }
@@ -427,6 +428,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun HeaderWithButton() {
+        val coroutineScope = rememberCoroutineScope()
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -473,7 +475,7 @@ class MainActivity : ComponentActivity() {
                     DropdownMenuItem(
                         text = { Text("delete Test") },
                         onClick = {
-                            GlobalScope.launch {
+                            coroutineScope.launch {
                                 todoViewModel.deleteAll()
                                 delay(500)
                             }
@@ -570,10 +572,10 @@ class MainActivity : ComponentActivity() {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({ posts ->
                 for (post in posts) {
-                    Log.i(tag, "Title : ${post.title}")
+                    info(TAG, "Title : ${post.title}")
                 }
             }, { error ->
-                Log.i(tag, "${error.message}")
+                info(TAG, "${error.message}")
             })
 
     }
