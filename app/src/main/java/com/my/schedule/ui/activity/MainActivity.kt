@@ -67,12 +67,12 @@ import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.my.schedule.R
+import com.my.schedule.ui.api.Repository
 import com.my.schedule.ui.data.todo.Todo
 import com.my.schedule.ui.data.todo.TodoDatabase
 import com.my.schedule.ui.data.todo.TodoRepository
 import com.my.schedule.ui.utils.DateTime.Companion.DATE_FORMATTER
 import com.my.schedule.ui.utils.DateTime.Companion.TIME_FORMATTER
-import com.my.schedule.ui.http.retrofit.RetrofitClient
 import com.my.schedule.ui.notification.TodoNotificationWorker
 import com.my.schedule.ui.preference.MainActivityPrefer.Companion.BOTTOM_PADDING
 import com.my.schedule.ui.preference.MainActivityPrefer.Companion.BOTTOM_SHEET_HEIGHT
@@ -88,10 +88,9 @@ import com.my.schedule.ui.utils.info
 import com.my.schedule.ui.viewmodel.CounterViewModel
 import com.my.schedule.ui.viewmodel.TodoViewModel
 import com.my.schedule.ui.viewmodel.TodoViewModelFactory
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.Disposable
-import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -107,8 +106,8 @@ import java.util.concurrent.TimeUnit
 class MainActivity : ComponentActivity() {
     private lateinit var todoViewModel: TodoViewModel
     private lateinit var counterViewModel: CounterViewModel
+    private lateinit var apiRepository: Repository
     private var disposableIncrement: Disposable? = null
-    private var disposableRetrofit: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -166,6 +165,7 @@ class MainActivity : ComponentActivity() {
 
     private fun init() {
         initRoom()
+        apiRepository = Repository()
         counterViewModel = CounterViewModel()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             checkNotificationPermission()
@@ -468,7 +468,9 @@ class MainActivity : ComponentActivity() {
                     DropdownMenuItem(
                         text = { Text("Retrofit Test") },
                         onClick = {
-                            fetchPosts()
+                            coroutineScope.launch(Dispatchers.Default) {
+                                apiRepository.post()
+                            }
                             expanded = false
                         }
                     )
@@ -564,26 +566,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun fetchPosts() {
-        val apiService = RetrofitClient.instance
-
-        disposableRetrofit = apiService.getPosts()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ posts ->
-                for (post in posts) {
-                    info(TAG, "Title : ${post.title}")
-                }
-            }, { error ->
-                info(TAG, "${error.message}")
-            })
-
-    }
-
     override fun onDestroy() {
         super.onDestroy()
         disposableIncrement?.dispose()
-        disposableRetrofit?.dispose()
     }
 
     @Composable
@@ -595,7 +580,7 @@ class MainActivity : ComponentActivity() {
 
             items(todos) { todo ->
 
-                if(todo.completed){
+                if (todo.completed) {
                     return@items
                 }
 
