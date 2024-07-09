@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -62,14 +63,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.lifecycle.ViewModelProvider
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.my.schedule.R
 import com.my.schedule.ui.data.todo.Todo
-import com.my.schedule.ui.data.todo.TodoDatabase
-import com.my.schedule.ui.data.todo.TodoRepository
 import com.my.schedule.ui.utils.DateTime.Companion.DATE_FORMATTER
 import com.my.schedule.ui.utils.DateTime.Companion.TIME_FORMATTER
 import com.my.schedule.ui.http.retrofit.RetrofitClient
@@ -87,8 +85,9 @@ import com.my.schedule.ui.utils.debug
 import com.my.schedule.ui.utils.info
 import com.my.schedule.ui.viewmodel.CounterViewModel
 import com.my.schedule.ui.viewmodel.TodoViewModel
-import com.my.schedule.ui.viewmodel.TodoViewModelFactory
+import dagger.hilt.android.AndroidEntryPoint
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -103,12 +102,20 @@ import java.util.Calendar
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    private lateinit var todoViewModel: TodoViewModel
-    private lateinit var counterViewModel: CounterViewModel
+    private val todoViewModel: TodoViewModel by viewModels()
+    private val counterViewModel: CounterViewModel by viewModels()
     private var disposableIncrement: Disposable? = null
+        set(value) {
+            value?.let { compositeDisposable.add(value) }
+        }
     private var disposableRetrofit: Disposable? = null
+        set(value) {
+            value?.let { compositeDisposable.add(value) }
+        }
+    
+    private val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -165,20 +172,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun init() {
-        initRoom()
-        counterViewModel = CounterViewModel()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             checkNotificationPermission()
         }
-    }
-
-    private fun initRoom() {
-        // Room 데이터 베이스 초기화
-        val database = TodoDatabase.getDatabase(this)
-        val repository = TodoRepository(database.todoDao())
-        val viewModelFactory = TodoViewModelFactory(repository)
-        todoViewModel = ViewModelProvider(this, viewModelFactory).get(TodoViewModel::class.java)
-
     }
 
     @OptIn(ExperimentalMaterialApi::class, DelicateCoroutinesApi::class)
@@ -582,8 +578,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        disposableIncrement?.dispose()
-        disposableRetrofit?.dispose()
+        compositeDisposable.dispose()
     }
 
     @Composable
