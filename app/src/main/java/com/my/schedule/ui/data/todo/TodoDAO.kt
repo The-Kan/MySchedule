@@ -12,6 +12,9 @@ interface TodoDao {
     @Insert
     suspend fun insert(todo: Todo)
 
+    @Query("SELECT * FROM todo_table WHERE completed = 1")
+    fun getAllCompletedTodos(): LiveData<List<Todo>>
+
     @Query("SELECT * FROM todo_table")
     fun getAllTodos(): LiveData<List<Todo>>
 

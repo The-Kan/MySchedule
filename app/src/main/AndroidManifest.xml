@@ -15,6 +15,11 @@
         android:theme="@style/Theme.MySchedule"
         tools:targetApi="31">
         <activity
+            android:name=".ui.activity.CompletedActivity"
+            android:exported="false"
+            android:label="@string/title_activity_completed"
+            android:theme="@style/Theme.MySchedule" />
+        <activity
             android:name=".ui.activity.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
