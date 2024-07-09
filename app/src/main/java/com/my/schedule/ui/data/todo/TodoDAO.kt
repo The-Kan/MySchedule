@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 
 @Dao
 interface TodoDao {
@@ -13,6 +14,9 @@ interface TodoDao {
 
     @Query("SELECT * FROM todo_table")
     fun getAllTodos(): LiveData<List<Todo>>
+
+    @Update
+    suspend fun update(todo: Todo)
 
     @Query("DELETE FROM todo_table")
     suspend fun deleteAll()

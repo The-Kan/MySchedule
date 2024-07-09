@@ -578,6 +578,11 @@ class MainActivity : ComponentActivity() {
         {
 
             items(todos) { todo ->
+
+                if(todo.completed){
+                    return@items
+                }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -590,8 +595,11 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.weight(1f)
                     )
                     Button(
-                        onClick = { /* 버튼 클릭 시 동작 */
-                            todoViewModel.delete(todo)
+                        onClick = {
+                            // When updating, Room DB notices the change and updates LiveData<List<Todo>>.
+                            // However, LiveData does not notice changes in "the field of List element objects".
+                            // There appears to be a problem with checking the equality of "the field of List element objects", which can be resolved by copying todo object.
+                            todoViewModel.update(todo.copy(completed = true))
                             cancelNotification(todo.notificationWorkId)
                         },
                         modifier = Modifier.padding(start = 16.dp)

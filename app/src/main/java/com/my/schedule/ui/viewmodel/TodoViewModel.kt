@@ -14,6 +14,10 @@ class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
         repository.insert(todo)
     }
 
+    fun update(todo: Todo) = viewModelScope.launch {
+        repository.update(todo)
+    }
+
     fun delete(todo: Todo) = viewModelScope.launch {
         repository.delete(todo)
     }

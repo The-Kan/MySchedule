@@ -12,6 +12,10 @@ class TodoRepository(private val todoDao: TodoDao) {
         return todoDao.getAllTodos()
     }
 
+    suspend fun update(todo: Todo) {
+        todoDao.update(todo)
+    }
+
     suspend fun deleteAll() {
         todoDao.deleteAll()
     }
