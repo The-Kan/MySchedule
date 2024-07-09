@@ -10,4 +10,6 @@
     <string name="time">시간</string>
     <string name="time_setting">시간 설정</string>
     <string name="completed">완료</string>
+    <string name="completed_todo">완료된 일정</string>
+    <string name="title_activity_completed">CompletedActivity</string>
 </resources>

@@ -9,5 +9,6 @@ data class Todo(
     var todo: String = "",
     var date: String = "",
     var time: String = "",
-    var notificationWorkId : String = ""
+    var notificationWorkId : String = "",
+    var completed : Boolean = false
 )

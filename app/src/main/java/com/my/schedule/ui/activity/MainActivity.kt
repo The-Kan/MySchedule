@@ -2,6 +2,7 @@ package com.my.schedule.ui.activity
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -481,6 +482,14 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                     DropdownMenuItem(
+                        text = { Text(stringResource(id = R.string.completed_todo)) },
+                        onClick = {
+                            goToCompletedActivity()
+                            expanded = false
+                        }
+                    )
+
+                    DropdownMenuItem(
                         text = { Text(text = stringResource(id = R.string.settings)) },
                         onClick = { expanded = false }
                     )
@@ -489,6 +498,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
+    private fun goToCompletedActivity() {
+        val intent = Intent(this, CompletedActivity::class.java)
+        startActivity(intent)
+    }
 
     @Composable
     fun BottomWithButton(onButtonClick: () -> Unit) {
@@ -578,6 +592,11 @@ class MainActivity : ComponentActivity() {
         {
 
             items(todos) { todo ->
+
+                if(todo.completed){
+                    return@items
+                }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -590,8 +609,11 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.weight(1f)
                     )
                     Button(
-                        onClick = { /* 버튼 클릭 시 동작 */
-                            todoViewModel.delete(todo)
+                        onClick = {
+                            // When updating, Room DB notices the change and updates LiveData<List<Todo>>.
+                            // However, LiveData does not notice changes in "the field of List element objects".
+                            // There appears to be a problem with checking the equality of "the field of List element objects", which can be resolved by copying todo object.
+                            todoViewModel.update(todo.copy(completed = true))
                             cancelNotification(todo.notificationWorkId)
                         },
                         modifier = Modifier.padding(start = 16.dp)

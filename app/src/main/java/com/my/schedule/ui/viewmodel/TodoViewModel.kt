@@ -9,9 +9,14 @@ import kotlinx.coroutines.launch
 
 class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
     val items: LiveData<List<Todo>> = repository.getAllTodos()
+    val completedTodos: LiveData<List<Todo>> = repository.getAllCompletedTodos()
 
     fun insert(todo: Todo) = viewModelScope.launch {
         repository.insert(todo)
+    }
+
+    fun update(todo: Todo) = viewModelScope.launch {
+        repository.update(todo)
     }
 
     fun delete(todo: Todo) = viewModelScope.launch {
