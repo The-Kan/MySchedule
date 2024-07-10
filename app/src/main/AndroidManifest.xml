@@ -5,6 +5,7 @@
     <!-- Development Stage - temporary allowBackup false. because Room DB was saved automatically, it is not free to modify Room DB Table, Column
          Released in market Stage - change to true -->
     <application
+        android:name=".ui.MyScheduleApplication"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"

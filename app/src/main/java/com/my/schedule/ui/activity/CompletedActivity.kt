@@ -3,6 +3,7 @@ package com.my.schedule.ui.activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,22 +33,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModelProvider
 import com.my.schedule.R
-import com.my.schedule.ui.data.todo.TodoDatabase
-import com.my.schedule.ui.data.todo.TodoRepository
 import com.my.schedule.ui.preference.MainActivityPrefer
 import com.my.schedule.ui.theme.MyScheduleTheme
 import com.my.schedule.ui.viewmodel.TodoViewModel
-import com.my.schedule.ui.viewmodel.TodoViewModelFactory
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class CompletedActivity : ComponentActivity() {
-    private lateinit var todoViewModel: TodoViewModel
+
+    private val todoViewModel : TodoViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        init()
 
         setContent {
             MyScheduleTheme {
@@ -91,19 +89,6 @@ class CompletedActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-
-    private fun init() {
-        initRoom()
-    }
-
-    private fun initRoom() {
-        // Room 데이터 베이스 초기화
-        val database = TodoDatabase.getDatabase(this)
-        val repository = TodoRepository(database.todoDao())
-        val viewModelFactory = TodoViewModelFactory(repository)
-        todoViewModel = ViewModelProvider(this, viewModelFactory).get(TodoViewModel::class.java)
     }
 
     @Preview

@@ -3,13 +3,24 @@ package com.my.schedule.ui.viewmodel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.my.schedule.ui.api.Repository
 import com.my.schedule.ui.data.todo.Todo
 import com.my.schedule.ui.data.todo.TodoRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class TodoViewModel(private val repository: TodoRepository) : ViewModel() {
+@HiltViewModel
+class TodoViewModel @Inject constructor(
+    private val repository: TodoRepository,
+    private val apiRepository: Repository
+) : ViewModel() {
     val items: LiveData<List<Todo>> = repository.getAllTodos()
     val completedTodos: LiveData<List<Todo>> = repository.getAllCompletedTodos()
+
+    suspend fun post() {
+        apiRepository.post()
+    }
 
     fun insert(todo: Todo) = viewModelScope.launch {
         repository.insert(todo)

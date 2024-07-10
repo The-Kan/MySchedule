@@ -1,8 +1,9 @@
 package com.my.schedule.ui.data.todo
 
 import androidx.lifecycle.LiveData
+import javax.inject.Inject
 
-class TodoRepository(private val todoDao: TodoDao) {
+class TodoRepository @Inject constructor(private val todoDao: TodoDao) {
 
     suspend fun insert(todo: Todo) {
         todoDao.insert(todo)
